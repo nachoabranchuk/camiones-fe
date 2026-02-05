@@ -12,23 +12,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [securityDropdownOpen, setSecurityDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Cada tab se muestra solo si el usuario tiene la acción "Ver [X]" correspondiente
-  const navigation = [
-    { name: "Dashboard", href: "/dashboard" },
-    { name: "Mesas", href: "/mesas", verAccion: "Mesas.Ver Pedidos" },
-    {
-      name: "Productos",
-      href: "/productos",
-      verAccion: "Productos.Ver Productos",
-    },
-    {
-      name: "Categorías",
-      href: "/categorias",
-      verAccion: "Categorias.Ver Categorias",
-    },
-    { name: "Reportes", href: "/reportes", verAccion: "Reportes.Ver Reportes" },
-  ];
-
   const securityItems = [
     { name: "Módulos", href: "/modulos", verAccion: "Modulos.Ver Modulos" },
     {
@@ -50,7 +33,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   );
 
   // Debug: qué acciones tiene el usuario y qué tabs del nav son visibles
-  const navVisibility = navigation.map((item) => ({
+  const navVisibility = securityItems.map((item) => ({
     name: item.name,
     verAccion: "verAccion" in item ? item.verAccion : null,
     hasAccess:
@@ -92,32 +75,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-gray-900">Bar App</h1>
+                <h1 className="text-xl font-bold text-gray-900">Camiones</h1>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                {navigation.map((item) => {
-                  // Sin verAccion (ej. Dashboard) siempre se muestra; con verAccion solo si tiene permiso
-                  if (
-                    "verAccion" in item &&
-                    item.verAccion &&
-                    !hasAccessToAccion(item.verAccion)
-                  ) {
-                    return null;
-                  }
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
-                        isActive(item.href)
-                          ? "border-blue-500 text-gray-900"
-                          : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                      }`}
-                    >
-                      {item.name}
-                    </Link>
-                  );
-                })}
+                <Link
+                  to="/dashboard"
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    isActive("/dashboard")
+                      ? "border-blue-500 text-gray-900"
+                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  }`}
+                >
+                  Dashboard
+                </Link>
 
                 {/* Security Dropdown - solo se muestra si hay al menos un ítem visible */}
                 {visibleSecurityItems.length > 0 && (

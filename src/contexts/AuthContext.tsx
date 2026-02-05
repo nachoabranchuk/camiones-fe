@@ -74,7 +74,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.removeItem("user");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-    localStorage.removeItem("cart");
   };
 
   const hasAccessToModulo = (moduloNombre: string): boolean => {
@@ -101,15 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const found = user.accionesAccesibles.some(
       (accionUsuario) => accionUsuario.toLowerCase() === accion.toLowerCase(),
     );
-    if (
-      !found &&
-      [
-        "Mesas.Ver Pedidos",
-        "Productos.Ver Productos",
-        "Categorias.Ver Categorias",
-        "Reportes.Ver Reportes",
-      ].includes(accion)
-    ) {
+    if (!found) {
       console.log("[hasAccessToAccion] Acción no encontrada para nav", {
         accionBuscada: accion,
         totalAcciones: user.accionesAccesibles.length,

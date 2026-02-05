@@ -1,38 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
-/** Módulos principales (misma fuente que el nav del Layout) */
-const NAV_ITEMS = [
-  {
-    name: "Mesas",
-    href: "/mesas",
-    verAccion: "Mesas.Ver Pedidos",
-    description: "Ver y gestionar mesas",
-    color: "blue" as const,
-  },
-  {
-    name: "Productos",
-    href: "/productos",
-    verAccion: "Productos.Ver Productos",
-    description: "Gestionar productos",
-    color: "green" as const,
-  },
-  {
-    name: "Categorías",
-    href: "/categorias",
-    verAccion: "Categorias.Ver Categorias",
-    description: "Gestionar categorías",
-    color: "purple" as const,
-  },
-  {
-    name: "Reportes",
-    href: "/reportes",
-    verAccion: "Reportes.Ver Reportes",
-    description: "Ver reportes y estadísticas",
-    color: "indigo" as const,
-  },
-];
-
 /** Módulo Seguridad (misma fuente que el dropdown del Layout) */
 const SEGURIDAD_ITEMS = [
   {
@@ -78,20 +46,16 @@ const BORDER_CLASSES: Record<string, string> = {
   purple: "border-purple-200 hover:border-purple-400 bg-white",
   yellow: "border-amber-200 hover:border-amber-400 bg-white",
   red: "border-rose-200 hover:border-rose-400 bg-white",
-  indigo: "border-indigo-200 hover:border-indigo-400 bg-white",
 };
 
 const Dashboard = () => {
   const { hasAccessToAccion } = useAuth();
 
-  const visibleNav = NAV_ITEMS.filter((item) =>
-    hasAccessToAccion(item.verAccion),
-  );
   const visibleSeguridad = SEGURIDAD_ITEMS.filter((item) =>
     hasAccessToAccion(item.verAccion),
   );
 
-  const hasAnyAccess = visibleNav.length > 0 || visibleSeguridad.length > 0;
+  const hasAnyAccess = visibleSeguridad.length > 0;
 
   return (
     <div>
@@ -107,51 +71,25 @@ const Dashboard = () => {
           No tienes acceso a ningún módulo. Contacta al administrador.
         </p>
       ) : (
-        <>
-          {visibleNav.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">
-                Módulos
-              </h2>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {visibleNav.map((card) => (
-                  <Link
-                    key={card.href}
-                    to={card.href}
-                    className={`block rounded-lg shadow-md border-2 p-6 text-gray-900 transition-colors ${
-                      BORDER_CLASSES[card.color]
-                    }`}
-                  >
-                    <h3 className="text-xl font-semibold mb-2">{card.name}</h3>
-                    <p className="text-gray-600 text-sm">{card.description}</p>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {visibleSeguridad.length > 0 && (
-            <div>
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">
-                Seguridad
-              </h2>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {visibleSeguridad.map((card) => (
-                  <Link
-                    key={card.href}
-                    to={card.href}
-                    className={`block rounded-lg shadow-md border-2 p-6 text-gray-900 transition-colors ${
-                      BORDER_CLASSES[card.color]
-                    }`}
-                  >
-                    <h3 className="text-xl font-semibold mb-2">{card.name}</h3>
-                    <p className="text-gray-600 text-sm">{card.description}</p>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-700 mb-4">
+            Seguridad
+          </h2>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {visibleSeguridad.map((card) => (
+              <Link
+                key={card.href}
+                to={card.href}
+                className={`block rounded-lg shadow-md border-2 p-6 text-gray-900 transition-colors ${
+                  BORDER_CLASSES[card.color]
+                }`}
+              >
+                <h3 className="text-xl font-semibold mb-2">{card.name}</h3>
+                <p className="text-gray-600 text-sm">{card.description}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

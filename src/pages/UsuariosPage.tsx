@@ -5,26 +5,39 @@ import type { User, CreateUserDto, UpdateUserDto, Grupo } from "../types";
 import Modal from "../components/Modal";
 
 const UsuariosPage = () => {
+  const {
+    user: currentUser,
+    refreshPermissions,
+    hasAccessToAccion,
+  } = useAuth();
   const [usuarios, setUsuarios] = useState<User[]>([]);
   const [grupos, setGrupos] = useState<Grupo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingUsuario, setEditingUsuario] = useState<User | null>(null);
   const [deletingUsuario, setDeletingUsuario] = useState<User | null>(null);
+  const [successMessage, setSuccessMessage] = useState("");
   const [formData, setFormData] = useState<CreateUserDto>({
-    Nombre: "",
-    Apellido: "",
-    Correo: "",
-    Contrasena: "",
-    Telefono: "",
-    EstaActivo: true,
-    grupos_ids: [],
+    nombre: "",
+    apellido: "",
+    correo: "",
+    contrasena: "",
+    telefono: "",
+    estaActivo: true,
+    gruposIds: [],
   });
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (!successMessage) return;
+    const timer = setTimeout(() => setSuccessMessage(""), 5000);
+    return () => clearTimeout(timer);
+  }, [successMessage]);
 
   const loadData = async () => {
     try {
@@ -45,13 +58,13 @@ const UsuariosPage = () => {
   const handleCreate = () => {
     setEditingUsuario(null);
     setFormData({
-      Nombre: "",
-      Apellido: "",
-      Correo: "",
-      Contrasena: "",
-      Telefono: "",
-      EstaActivo: true,
-      grupos_ids: [],
+      nombre: "",
+      apellido: "",
+      correo: "",
+      contrasena: "",
+      telefono: "",
+      estaActivo: true,
+      gruposIds: [],
     });
     setIsModalOpen(true);
   };
@@ -59,37 +72,54 @@ const UsuariosPage = () => {
   const handleEdit = (usuario: User) => {
     setEditingUsuario(usuario);
     setFormData({
-      Nombre: usuario.nombre,
-      Apellido: usuario.apellido,
-      Correo: usuario.correo,
-      Contrasena: "",
-      Telefono: usuario.telefono,
-      EstaActivo: usuario.estaActivo,
-      grupos_ids: usuario.grupos?.map((g) => g.id) || [],
+      nombre: usuario.nombre,
+      apellido: usuario.apellido,
+      correo: usuario.correo,
+      contrasena: "",
+      telefono: usuario.telefono,
+      estaActivo: usuario.estaActivo,
+      gruposIds: usuario.grupos?.map((g) => g.id) || [],
     });
     setIsModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setSuccessMessage("");
     try {
       if (editingUsuario) {
         const updateData: UpdateUserDto = {
-          Nombre: formData.Nombre,
-          Apellido: formData.Apellido,
-          Correo: formData.Correo,
-          Telefono: formData.Telefono,
-          EstaActivo: formData.EstaActivo,
-          grupos_ids: formData.grupos_ids,
+          nombre: formData.nombre,
+          apellido: formData.apellido,
+          correo: formData.correo,
+          telefono: formData.telefono,
+          estaActivo: formData.estaActivo,
+          gruposIds: formData.gruposIds,
         };
-        await usuariosApi.update(editingUsuario.id, updateData);
+        const updatedUser = await usuariosApi.update(
+          editingUsuario.id,
+          updateData,
+        );
+
+        // Si actualizamos al usuario logueado, recargar permisos y acciones
+        if (currentUser && editingUsuario.id === currentUser.id) {
+          await refreshPermissions();
+          setSuccessMessage(
+            "Usuario actualizado. Tus permisos y acciones se han recargado.",
+          );
+        } else {
+          setSuccessMessage("Usuario actualizado correctamente.");
+        }
       } else {
         await usuariosApi.create(formData);
+        setSuccessMessage("Usuario creado correctamente.");
       }
       setIsModalOpen(false);
-      loadData();
+      await loadData();
     } catch (error) {
       console.error("Error saving usuario:", error);
+      setError("Error al guardar el usuario. Por favor, intenta nuevamente.");
     }
   };
 
@@ -111,16 +141,16 @@ const UsuariosPage = () => {
   };
 
   const toggleGrupo = (grupoId: number) => {
-    const currentIds = formData.grupos_ids || [];
+    const currentIds = formData.gruposIds || [];
     if (currentIds.includes(grupoId)) {
       setFormData({
         ...formData,
-        grupos_ids: currentIds.filter((id) => id !== grupoId),
+        gruposIds: currentIds.filter((id) => id !== grupoId),
       });
     } else {
       setFormData({
         ...formData,
-        grupos_ids: [...currentIds, grupoId],
+        gruposIds: [...currentIds, grupoId],
       });
     }
   };
@@ -137,6 +167,16 @@ const UsuariosPage = () => {
 
   return (
     <div>
+      {error && (
+        <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+      {successMessage && (
+        <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+          {successMessage}
+        </div>
+      )}
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Usuarios</h1>
@@ -146,7 +186,17 @@ const UsuariosPage = () => {
         </div>
         <button
           onClick={handleCreate}
-          className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+          disabled={!hasAccessToAccion("Usuarios.Crear Usuario")}
+          className={`px-4 py-2 rounded-md ${
+            hasAccessToAccion("Usuarios.Crear Usuario")
+              ? "bg-red-600 text-white hover:bg-red-700"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
+          title={
+            !hasAccessToAccion("Usuarios.Crear Usuario")
+              ? "No tienes permisos para crear usuarios"
+              : "Crear nuevo usuario"
+          }
         >
           Nuevo Usuario
         </button>
@@ -188,14 +238,36 @@ const UsuariosPage = () => {
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handleEdit(usuario)}
-                      className="text-blue-600 hover:text-blue-800"
+                      disabled={!hasAccessToAccion("Usuarios.Editar Usuario")}
+                      className={`${
+                        hasAccessToAccion("Usuarios.Editar Usuario")
+                          ? "text-blue-600 hover:text-blue-800"
+                          : "text-gray-300 cursor-not-allowed"
+                      }`}
+                      title={
+                        !hasAccessToAccion("Usuarios.Editar Usuario")
+                          ? "No tienes permisos para editar usuarios"
+                          : "Editar"
+                      }
                     >
                       Editar
                     </button>
                     {canDelete(usuario) && (
                       <button
                         onClick={() => handleDeleteClick(usuario)}
-                        className="text-red-600 hover:text-red-800"
+                        disabled={
+                          !hasAccessToAccion("Usuarios.Eliminar Usuario")
+                        }
+                        className={`${
+                          hasAccessToAccion("Usuarios.Eliminar Usuario")
+                            ? "text-red-600 hover:text-red-800"
+                            : "text-gray-300 cursor-not-allowed"
+                        }`}
+                        title={
+                          !hasAccessToAccion("Usuarios.Eliminar Usuario")
+                            ? "No tienes permisos para eliminar usuarios"
+                            : "Eliminar"
+                        }
                       >
                         Eliminar
                       </button>
@@ -223,11 +295,11 @@ const UsuariosPage = () => {
             </label>
             <input
               type="text"
-              id="Nombre"
+              id="nombre"
               required
-              value={formData.Nombre}
+              value={formData.nombre}
               onChange={(e) =>
-                setFormData({ ...formData, Nombre: e.target.value })
+                setFormData({ ...formData, nombre: e.target.value })
               }
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
             />
@@ -241,11 +313,11 @@ const UsuariosPage = () => {
             </label>
             <input
               type="text"
-              id="Apellido"
+              id="apellido"
               required
-              value={formData.Apellido}
+              value={formData.apellido}
               onChange={(e) =>
-                setFormData({ ...formData, Apellido: e.target.value })
+                setFormData({ ...formData, apellido: e.target.value })
               }
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
             />
@@ -259,11 +331,11 @@ const UsuariosPage = () => {
             </label>
             <input
               type="email"
-              id="Correo"
+              id="correo"
               required
-              value={formData.Correo}
+              value={formData.correo}
               onChange={(e) =>
-                setFormData({ ...formData, Correo: e.target.value })
+                setFormData({ ...formData, correo: e.target.value })
               }
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
             />
@@ -278,11 +350,11 @@ const UsuariosPage = () => {
               </label>
               <input
                 type="password"
-                id="Contrasena"
+                id="contrasena"
                 required={!editingUsuario}
-                value={formData.Contrasena}
+                value={formData.contrasena}
                 onChange={(e) =>
-                  setFormData({ ...formData, Contrasena: e.target.value })
+                  setFormData({ ...formData, contrasena: e.target.value })
                 }
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
               />
@@ -297,11 +369,11 @@ const UsuariosPage = () => {
             </label>
             <input
               type="tel"
-              id="Telefono"
+              id="telefono"
               required
-              value={formData.Telefono}
+              value={formData.telefono}
               onChange={(e) =>
-                setFormData({ ...formData, Telefono: e.target.value })
+                setFormData({ ...formData, telefono: e.target.value })
               }
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
             />
@@ -310,9 +382,9 @@ const UsuariosPage = () => {
             <label className="flex items-center">
               <input
                 type="checkbox"
-                checked={formData.EstaActivo}
+                checked={formData.estaActivo}
                 onChange={(e) =>
-                  setFormData({ ...formData, EstaActivo: e.target.checked })
+                  setFormData({ ...formData, estaActivo: e.target.checked })
                 }
                 className="rounded border-gray-300 text-red-600 focus:ring-red-500"
               />
@@ -333,7 +405,7 @@ const UsuariosPage = () => {
                   <label key={grupo.id} className="flex items-center py-1">
                     <input
                       type="checkbox"
-                      checked={formData.grupos_ids?.includes(grupo.id) || false}
+                      checked={formData.gruposIds?.includes(grupo.id) || false}
                       onChange={() => toggleGrupo(grupo.id)}
                       className="rounded border-gray-300 text-red-600 focus:ring-red-500"
                     />

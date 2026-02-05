@@ -1,17 +1,27 @@
-import { useState, useEffect } from 'react';
-import { accionesApi, formulariosApi } from '../services/api';
-import type { Accion, CreateAccionDto, UpdateAccionDto, Formulario } from '../types';
-import Modal from '../components/Modal';
+import { useState, useEffect } from "react";
+import { accionesApi } from "../services/api";
+import { useNavigate } from "react-router-dom";
+
+interface PredefinedActionRow {
+  key: string;
+  label: string;
+  formulario: string;
+  accionNombre: string;
+  accionId: number;
+  formularios: Array<{ id: number; nombre: string }>;
+  grupos: Array<{ id: number; nombre: string }>;
+  existsInDb: boolean;
+  dbId?: number;
+}
 
 const AccionesPage = () => {
-  const [acciones, setAcciones] = useState<Accion[]>([]);
-  const [formularios, setFormularios] = useState<Formulario[]>([]);
+  const navigate = useNavigate();
+  const [actions, setActions] = useState<PredefinedActionRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [editingAccion, setEditingAccion] = useState<Accion | null>(null);
-  const [deletingAccion, setDeletingAccion] = useState<Accion | null>(null);
-  const [formData, setFormData] = useState<CreateAccionDto>({ nombre: '', formulario_id: 0 });
+  const [groupedActions, setGroupedActions] = useState<
+    Record<string, PredefinedActionRow[]>
+  >({});
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     loadData();
@@ -20,224 +30,183 @@ const AccionesPage = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [accionesData, formulariosData] = await Promise.all([
-        accionesApi.getAll(),
-        formulariosApi.getAll(),
-      ]);
-      setAcciones(accionesData);
-      setFormularios(formulariosData);
+      const data = await accionesApi.getPredefinedActionsWithGrupos();
+      setActions(data);
+
+      const grouped: Record<string, PredefinedActionRow[]> = {};
+      data.forEach((action) => {
+        if (!grouped[action.formulario]) {
+          grouped[action.formulario] = [];
+        }
+        grouped[action.formulario].push(action);
+      });
+      setGroupedActions(grouped);
+      setOpenSections(
+        Object.keys(grouped).reduce<Record<string, boolean>>((acc, key) => {
+          acc[key] = true;
+          return acc;
+        }, {}),
+      );
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error("Error loading actions:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreate = () => {
-    setEditingAccion(null);
-    setFormData({ nombre: '', formulario_id: formularios[0]?.id || 0 });
-    setIsModalOpen(true);
-  };
-
-  const handleEdit = (accion: Accion) => {
-    setEditingAccion(accion);
-    setFormData({
-      nombre: accion.nombre,
-      formulario_id: accion.formulario_id || accion.formulario?.id || 0,
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingAccion) {
-        await accionesApi.update(editingAccion.id, formData as UpdateAccionDto);
-      } else {
-        await accionesApi.create(formData);
-      }
-      setIsModalOpen(false);
-      loadData();
-    } catch (error) {
-      console.error('Error saving accion:', error);
-    }
-  };
-
-  const handleDeleteClick = (accion: Accion) => {
-    setDeletingAccion(accion);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!deletingAccion) return;
-    try {
-      await accionesApi.delete(deletingAccion.id);
-      setIsDeleteModalOpen(false);
-      setDeletingAccion(null);
-      loadData();
-    } catch (error) {
-      console.error('Error deleting accion:', error);
-    }
+  const toggleSection = (formulario: string) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [formulario]: !prev[formulario],
+    }));
   };
 
   if (loading) {
-    return <div className="text-center py-12">Cargando...</div>;
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Cargando acciones...</p>
+      </div>
+    );
   }
 
   return (
     <div>
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Acciones</h1>
-          <p className="mt-2 text-sm text-gray-600">Gestionar acciones</p>
-        </div>
-        <button
-          onClick={handleCreate}
-          className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
-        >
-          Nueva Acción
-        </button>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">
+          Acciones Predefinidas
+        </h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Visualiza las acciones predefinidas agrupadas por formulario. Para
+          asignar acciones a un formulario, edita el formulario en la página de{" "}
+          <button
+            onClick={() => navigate("/formularios")}
+            className="underline font-medium text-yellow-700 hover:text-yellow-800"
+          >
+            Formularios
+          </button>
+          . Para asignar formularios a grupos, edita un grupo en la página de{" "}
+          <button
+            onClick={() => navigate("/grupos")}
+            className="underline font-medium text-yellow-700 hover:text-yellow-800"
+          >
+            Grupos
+          </button>
+          .
+        </p>
       </div>
 
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul className="divide-y divide-gray-200">
-          {acciones.length === 0 ? (
-            <li className="px-6 py-4 text-center text-gray-500">No hay acciones</li>
-          ) : (
-            acciones.map((accion) => (
-              <li key={accion.id} className="px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900">{accion.nombre}</h3>
-                    <p className="text-sm text-gray-500">
-                      Formulario: {accion.formulario?.nombre || 'N/A'}
-                    </p>
-                    {accion.grupos && (
-                      <p className="text-sm text-gray-500">
-                        {accion.grupos.length} grupo(s)
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEdit(accion)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(accion)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))
-          )}
-        </ul>
-      </div>
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingAccion ? 'Editar Acción' : 'Nueva Acción'}
-      >
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">
-              Nombre
-            </label>
-            <input
-              type="text"
-              id="nombre"
-              required
-              value={formData.nombre}
-              onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500"
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="formulario_id" className="block text-sm font-medium text-gray-700">
-              Formulario
-            </label>
-            <select
-              id="formulario_id"
-              required
-              value={formData.formulario_id}
-              onChange={(e) => setFormData({ ...formData, formulario_id: parseInt(e.target.value) })}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500"
-            >
-              <option value={0}>Seleccione un formulario</option>
-              {formularios.map((formulario) => (
-                <option key={formulario.id} value={formulario.id}>
-                  {formulario.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex justify-end space-x-2">
+      {/* Actions grouped by Formulario (collapsible) */}
+      {Object.entries(groupedActions).map(([formulario, formularioActions]) => {
+        const isOpen = openSections[formulario] !== false;
+        return (
+          <div
+            key={formulario}
+            className="mb-4 bg-white shadow rounded-lg overflow-hidden"
+          >
             <button
               type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              onClick={() => toggleSection(formulario)}
+              className="w-full bg-gray-50 px-6 py-3 border-b border-gray-200 flex items-center justify-between text-left hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-yellow-500"
             >
-              Cancelar
+              <div className="flex items-center gap-3">
+                <span
+                  className={`inline-flex text-gray-500 transition-transform ${
+                    isOpen ? "rotate-90" : ""
+                  }`}
+                  aria-hidden
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </span>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {formulario}
+                </h2>
+                <span className="text-sm text-gray-500">
+                  ({formularioActions.length} acción
+                  {formularioActions.length !== 1 ? "es" : ""})
+                </span>
+              </div>
+              <span className="text-sm text-gray-500">
+                {isOpen ? "Ocultar" : "Mostrar"}
+              </span>
             </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-            >
-              {editingAccion ? 'Actualizar' : 'Crear'}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setDeletingAccion(null);
-        }}
-        title="Eliminar Acción"
-      >
-        {deletingAccion && (
-          <div>
-            <p className="mb-4 text-gray-700">
-              ¿Está seguro de eliminar la acción <strong>{deletingAccion.nombre}</strong>?
-            </p>
-            {deletingAccion.grupos && deletingAccion.grupos.length > 0 && (
-              <p className="mb-4 text-sm text-red-600">
-                Advertencia: Esta acción está asociada a {deletingAccion.grupos.length} grupo(s).
-              </p>
+            {isOpen && (
+              <div className="divide-y divide-gray-200">
+                {formularioActions.map((action) => (
+                  <div
+                    key={`${action.accionId}-${action.formulario}-${action.key}`}
+                    className="px-6 py-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {action.label}
+                        </h3>
+                        {action.existsInDb ? (
+                          <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                            En BD
+                          </span>
+                        ) : null}
+                        {action.formularios && action.formularios.length > 1 ? (
+                          <span className="text-xs text-gray-500">
+                            {action.formularios.length} formularios
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Clave:{" "}
+                        <code className="bg-gray-100 px-1 rounded">
+                          {action.key}
+                        </code>
+                      </p>
+                      {action.formularios && action.formularios.length > 0 ? (
+                        <p className="text-sm text-gray-600 mt-1">
+                          Formularios:{" "}
+                          {action.formularios.map((f) => f.nombre).join(", ")}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
-            <div className="flex justify-end space-x-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsDeleteModalOpen(false);
-                  setDeletingAccion(null);
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteConfirm}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-              >
-                Eliminar
-              </button>
-            </div>
           </div>
-        )}
-      </Modal>
+        );
+      })}
+
+      {/* Empty state */}
+      {actions.length === 0 && (
+        <div className="text-center py-12 bg-white rounded-lg shadow">
+          <svg
+            className="w-16 h-16 mx-auto text-gray-400 mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          <p className="text-gray-500">
+            No hay acciones predefinidas disponibles
+          </p>
+        </div>
+      )}
     </div>
   );
 };
 
 export default AccionesPage;
-

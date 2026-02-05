@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { authApi } from "../services/api";
+import { authApi, accionesApi } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 
 const LoginPage = () => {
@@ -21,7 +21,7 @@ const LoginPage = () => {
     try {
       const response = await authApi.login(
         formData.correo,
-        formData.contrasena
+        formData.contrasena,
       );
 
       // Store tokens
@@ -29,11 +29,57 @@ const LoginPage = () => {
       localStorage.setItem("refreshToken", response.refreshToken);
       localStorage.setItem("user", JSON.stringify(response.user));
 
-      // Update auth context
-      setUser({
+      // Fetch acciones accesibles y grupos del usuario
+      let accionesAccesibles: string[] = [];
+      let grupos: Array<{ id: number; nombre: string }> = [];
+      try {
+        [accionesAccesibles, grupos] = await Promise.all([
+          authApi.getAccionesAccesibles(),
+          authApi.getUserGrupos(),
+        ]);
+      } catch (err) {
+        console.error("Error fetching permissions:", err);
+      }
+
+      // Update auth context (incluye grupos para saber si es Admin)
+      const userData = {
         id: response.user.id,
         modulosAccesibles: response.user.modulosAccesibles || [],
-      });
+        accionesAccesibles,
+        grupos: Array.isArray(grupos)
+          ? grupos.map((g: { id: number; nombre: string }) => ({
+              id: g.id,
+              nombre: g.nombre,
+            }))
+          : [],
+      };
+      setUser(userData);
+
+      // Debug: Log user permissions
+      try {
+        const [debugInfo, accionesMatch] = await Promise.all([
+          authApi.debugPermissions(),
+          accionesApi.verifyMatch().catch(() => null),
+        ]);
+
+        console.log("=== USER PERMISSIONS DEBUG ===");
+        console.log("User ID:", userData.id);
+        console.log("Grupos:", userData.grupos);
+        console.log("Módulos Accesibles:", userData.modulosAccesibles);
+        console.log("Acciones Accesibles:", userData.accionesAccesibles);
+        console.log("Debug Info (detailed):", debugInfo);
+        if (accionesMatch) {
+          console.log("=== ACCIONES MATCH VERIFICATION ===");
+          console.log("Total in Constants:", accionesMatch.totalInConstants);
+          console.log("Total in DB:", accionesMatch.totalInDb);
+          console.log("Missing in DB:", accionesMatch.missingInDb);
+          console.log("Extra in DB:", accionesMatch.extraInDb);
+          console.log("===================================");
+        }
+        console.log("==============================");
+      } catch (err) {
+        console.error("Error fetching debug info:", err);
+      }
 
       // Redirect to dashboard
       navigate("/dashboard");

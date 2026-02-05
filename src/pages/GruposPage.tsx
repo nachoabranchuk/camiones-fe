@@ -1,20 +1,46 @@
-import { useState, useEffect } from 'react';
-import { gruposApi, accionesApi } from '../services/api';
-import type { Grupo, CreateGrupoDto, UpdateGrupoDto, Accion } from '../types';
-import Modal from '../components/Modal';
+import { useState, useEffect } from "react";
+import { gruposApi, formulariosApi } from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
+import type {
+  Grupo,
+  CreateGrupoDto,
+  UpdateGrupoDto,
+  Formulario,
+} from "../types";
+import Modal from "../components/Modal";
+
+/** Formularios del módulo Seguridad: no se permite desmarcarlos en el grupo Admin */
+const FORMULARIOS_SEGURIDAD = [
+  "Gestionar Modulos",
+  "Gestionar Grupos",
+  "Gestionar Formularios",
+  "Ver Acciones",
+  "Gestionar Usuarios",
+];
+
+const isFormularioSeguridad = (formulario: Formulario) =>
+  FORMULARIOS_SEGURIDAD.includes(formulario.nombre);
+
+const NOMBRE_GRUPO_ADMIN = "admin";
 
 const GruposPage = () => {
+  const {
+    user: currentUser,
+    refreshPermissions,
+    hasAccessToAccion,
+    isCurrentUserAdmin,
+  } = useAuth();
   const [grupos, setGrupos] = useState<Grupo[]>([]);
-  const [acciones, setAcciones] = useState<Accion[]>([]);
+  const [formularios, setFormularios] = useState<Formulario[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingGrupo, setEditingGrupo] = useState<Grupo | null>(null);
   const [deletingGrupo, setDeletingGrupo] = useState<Grupo | null>(null);
   const [formData, setFormData] = useState<CreateGrupoDto>({
-    nombre: '',
-    Estado: true,
-    acciones_ids: [],
+    nombre: "",
+    estaActivo: true,
+    formulariosIds: [],
   });
 
   useEffect(() => {
@@ -24,22 +50,35 @@ const GruposPage = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [gruposData, accionesData] = await Promise.all([
+      const [gruposData, formulariosData] = await Promise.all([
         gruposApi.getAll(),
-        accionesApi.getAll(),
+        formulariosApi.getAll(),
       ]);
-      setGrupos(gruposData);
-      setAcciones(accionesData);
+      setGrupos(gruposData || []);
+      setFormularios(formulariosData || []);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error("Error loading data:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  /** Grupos visibles: los no-Admin no ven el grupo Admin (el backend también lo filtra) */
+  const gruposVisibles = grupos.filter(
+    (g) =>
+      isCurrentUserAdmin() ||
+      g.nombre?.trim().toLowerCase() !== NOMBRE_GRUPO_ADMIN,
+  );
+
+  /** Si estamos editando el grupo Admin y el usuario actual es Admin → solo lectura */
+  const isEditingAdminReadOnly =
+    !!editingGrupo &&
+    editingGrupo.nombre?.trim().toLowerCase() === NOMBRE_GRUPO_ADMIN &&
+    isCurrentUserAdmin();
+
   const handleCreate = () => {
     setEditingGrupo(null);
-    setFormData({ nombre: '', Estado: true, acciones_ids: [] });
+    setFormData({ nombre: "", estaActivo: true, formulariosIds: [] });
     setIsModalOpen(true);
   };
 
@@ -47,24 +86,30 @@ const GruposPage = () => {
     setEditingGrupo(grupo);
     setFormData({
       nombre: grupo.nombre,
-      Estado: grupo.Estado,
-      acciones_ids: grupo.acciones?.map((a) => a.id) || [],
+      estaActivo: grupo.estaActivo,
+      formulariosIds: grupo.formularios?.map((f) => f.id) || [],
     });
     setIsModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isEditingAdminReadOnly) return; // No enviar si es solo lectura (Admin)
     try {
       if (editingGrupo) {
         await gruposApi.update(editingGrupo.id, formData as UpdateGrupoDto);
+
+        // Refresh permissions when grupo is updated, as it may affect current user's permissions
+        if (currentUser) {
+          await refreshPermissions();
+        }
       } else {
         await gruposApi.create(formData);
       }
       setIsModalOpen(false);
       loadData();
     } catch (error) {
-      console.error('Error saving grupo:', error);
+      console.error("Error saving grupo:", error);
     }
   };
 
@@ -81,23 +126,35 @@ const GruposPage = () => {
       setDeletingGrupo(null);
       loadData();
     } catch (error) {
-      console.error('Error deleting grupo:', error);
+      console.error("Error deleting grupo:", error);
     }
   };
 
-  const toggleAccion = (accionId: number) => {
-    const currentIds = formData.acciones_ids || [];
-    if (currentIds.includes(accionId)) {
+  const toggleFormulario = (formulario: Formulario) => {
+    if (isEditingAdminReadOnly) return;
+    const isAdminGroup =
+      editingGrupo?.nombre?.trim().toLowerCase() === NOMBRE_GRUPO_ADMIN;
+    if (isAdminGroup && isFormularioSeguridad(formulario)) return;
+    const formularioId = formulario.id;
+    const currentIds = formData.formulariosIds || [];
+    if (currentIds.includes(formularioId)) {
       setFormData({
         ...formData,
-        acciones_ids: currentIds.filter((id) => id !== accionId),
+        formulariosIds: currentIds.filter((id) => id !== formularioId),
       });
     } else {
       setFormData({
         ...formData,
-        acciones_ids: [...currentIds, accionId],
+        formulariosIds: [...currentIds, formularioId],
       });
     }
+  };
+
+  const isCheckboxDisabledForFormulario = (formulario: Formulario) => {
+    if (isEditingAdminReadOnly) return true;
+    if (editingGrupo?.nombre?.trim().toLowerCase() !== NOMBRE_GRUPO_ADMIN)
+      return false;
+    return isFormularioSeguridad(formulario);
   };
 
   if (loading) {
@@ -109,11 +166,23 @@ const GruposPage = () => {
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Grupos</h1>
-          <p className="mt-2 text-sm text-gray-600">Gestionar grupos de usuarios</p>
+          <p className="mt-2 text-sm text-gray-600">
+            Gestionar grupos de usuarios
+          </p>
         </div>
         <button
           onClick={handleCreate}
-          className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700"
+          disabled={!hasAccessToAccion("Grupos.Crear Grupo")}
+          className={`px-4 py-2 rounded-md ${
+            hasAccessToAccion("Grupos.Crear Grupo")
+              ? "bg-yellow-600 text-white hover:bg-yellow-700"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
+          title={
+            !hasAccessToAccion("Grupos.Crear Grupo")
+              ? "No tienes permisos para crear grupos"
+              : "Crear nuevo grupo"
+          }
         >
           Nuevo Grupo
         </button>
@@ -121,53 +190,90 @@ const GruposPage = () => {
 
       <div className="bg-white shadow overflow-hidden sm:rounded-md">
         <ul className="divide-y divide-gray-200">
-          {grupos.length === 0 ? (
-            <li className="px-6 py-4 text-center text-gray-500">No hay grupos</li>
+          {gruposVisibles.length === 0 ? (
+            <li className="px-6 py-4 text-center text-gray-500">
+              No hay grupos
+            </li>
           ) : (
-            grupos.map((grupo) => (
-              <li key={grupo.id} className="px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <h3 className="text-lg font-medium text-gray-900">{grupo.nombre}</h3>
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                          grupo.Estado
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {grupo.Estado ? 'Activo' : 'Inactivo'}
-                      </span>
+            gruposVisibles.map((grupo) => {
+              const isAdminGroup =
+                grupo.nombre?.trim().toLowerCase() === NOMBRE_GRUPO_ADMIN;
+              const canEdit = hasAccessToAccion("Grupos.Editar Grupo");
+              const canDelete =
+                hasAccessToAccion("Grupos.Eliminar Grupo") && !isAdminGroup;
+              return (
+                <li key={grupo.id} className="px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {grupo.nombre}
+                        </h3>
+                        <span
+                          className={`px-2 py-1 text-xs rounded-full ${
+                            grupo.estaActivo
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {grupo.estaActivo ? "Activo" : "Inactivo"}
+                        </span>
+                      </div>
+                      {grupo.formularios && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          {grupo.formularios.length} formulario(s)
+                        </p>
+                      )}
+                      {grupo.usuarios && (
+                        <p className="text-sm text-gray-500">
+                          {grupo.usuarios.length} usuario(s)
+                        </p>
+                      )}
                     </div>
-                    {grupo.acciones && (
-                      <p className="text-sm text-gray-500 mt-1">
-                        {grupo.acciones.length} acción(es)
-                      </p>
-                    )}
-                    {grupo.usuarios && (
-                      <p className="text-sm text-gray-500">
-                        {grupo.usuarios.length} usuario(s)
-                      </p>
-                    )}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleEdit(grupo)}
+                        disabled={!canEdit}
+                        className={`${
+                          canEdit
+                            ? "text-blue-600 hover:text-blue-800"
+                            : "text-gray-300 cursor-not-allowed"
+                        }`}
+                        title={
+                          !canEdit
+                            ? "No tienes permisos para editar grupos"
+                            : isAdminGroup && isCurrentUserAdmin()
+                            ? "Ver grupo Admin (solo lectura)"
+                            : "Editar"
+                        }
+                      >
+                        {isAdminGroup && isCurrentUserAdmin()
+                          ? "Ver"
+                          : "Editar"}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(grupo)}
+                        disabled={!canDelete}
+                        className={`${
+                          canDelete
+                            ? "text-red-600 hover:text-red-800"
+                            : "text-gray-300 cursor-not-allowed"
+                        }`}
+                        title={
+                          isAdminGroup
+                            ? "No se puede eliminar el grupo Admin"
+                            : !hasAccessToAccion("Grupos.Eliminar Grupo")
+                            ? "No tienes permisos para eliminar grupos"
+                            : "Eliminar"
+                        }
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEdit(grupo)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(grupo)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))
+                </li>
+              );
+            })
           )}
         </ul>
       </div>
@@ -175,11 +281,26 @@ const GruposPage = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingGrupo ? 'Editar Grupo' : 'Nuevo Grupo'}
+        title={
+          isEditingAdminReadOnly
+            ? "Ver Grupo Admin (solo lectura)"
+            : editingGrupo
+            ? "Editar Grupo"
+            : "Nuevo Grupo"
+        }
       >
         <form onSubmit={handleSubmit}>
+          {isEditingAdminReadOnly && (
+            <p className="mb-3 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md px-3 py-2">
+              Perteneces al grupo Admin. Solo puedes visualizar sus formularios;
+              no está permitido modificar ni eliminar este grupo.
+            </p>
+          )}
           <div className="mb-4">
-            <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="nombre"
+              className="block text-sm font-medium text-gray-700"
+            >
               Nombre
             </label>
             <input
@@ -187,42 +308,82 @@ const GruposPage = () => {
               id="nombre"
               required
               value={formData.nombre}
-              onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
+              onChange={(e) =>
+                setFormData({ ...formData, nombre: e.target.value })
+              }
+              disabled={isEditingAdminReadOnly}
+              readOnly={isEditingAdminReadOnly}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 disabled:bg-gray-100 disabled:text-gray-600"
             />
           </div>
           <div className="mb-4">
             <label className="flex items-center">
               <input
                 type="checkbox"
-                checked={formData.Estado}
-                onChange={(e) => setFormData({ ...formData, Estado: e.target.checked })}
-                className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                checked={formData.estaActivo}
+                onChange={(e) =>
+                  setFormData({ ...formData, estaActivo: e.target.checked })
+                }
+                disabled={isEditingAdminReadOnly}
+                className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 disabled:opacity-60"
               />
               <span className="ml-2 text-sm text-gray-700">Activo</span>
             </label>
           </div>
+          {editingGrupo?.nombre?.trim().toLowerCase() === NOMBRE_GRUPO_ADMIN &&
+            !isEditingAdminReadOnly && (
+              <p className="mb-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                Los formularios del módulo Seguridad (Módulos, Grupos,
+                Formularios, Acciones, Usuarios) no se pueden desmarcar en el
+                grupo Admin para evitar perder acceso.
+              </p>
+            )}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Acciones
+              Formularios
             </label>
             <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md p-2">
-              {acciones.length === 0 ? (
-                <p className="text-sm text-gray-500">No hay acciones disponibles</p>
+              {formularios.length === 0 ? (
+                <p className="text-sm text-gray-500">
+                  No hay formularios disponibles
+                </p>
               ) : (
-                acciones.map((accion) => (
-                  <label key={accion.id} className="flex items-center py-1">
-                    <input
-                      type="checkbox"
-                      checked={formData.acciones_ids?.includes(accion.id) || false}
-                      onChange={() => toggleAccion(accion.id)}
-                      className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">
-                      {accion.nombre} ({accion.formulario?.nombre || 'N/A'})
-                    </span>
-                  </label>
-                ))
+                formularios.map((formulario) => {
+                  const disabled = isCheckboxDisabledForFormulario(formulario);
+                  return (
+                    <label
+                      key={formulario.id}
+                      className={`flex items-center py-1 ${
+                        disabled ? "text-gray-500" : ""
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={
+                          formData.formulariosIds?.includes(formulario.id) ||
+                          false
+                        }
+                        onChange={() => toggleFormulario(formulario)}
+                        disabled={disabled}
+                        className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">
+                        {formulario.nombre}
+                        {formulario.modulo && (
+                          <span className="text-gray-500">
+                            {" "}
+                            ({formulario.modulo.nombre})
+                          </span>
+                        )}
+                        {disabled && isEditingAdminReadOnly
+                          ? ""
+                          : disabled
+                          ? " (obligatorio en Admin)"
+                          : ""}
+                      </span>
+                    </label>
+                  );
+                })
               )}
             </div>
           </div>
@@ -232,14 +393,16 @@ const GruposPage = () => {
               onClick={() => setIsModalOpen(false)}
               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
             >
-              Cancelar
+              {isEditingAdminReadOnly ? "Cerrar" : "Cancelar"}
             </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700"
-            >
-              {editingGrupo ? 'Actualizar' : 'Crear'}
-            </button>
+            {!isEditingAdminReadOnly && (
+              <button
+                type="submit"
+                className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700"
+              >
+                {editingGrupo ? "Actualizar" : "Crear"}
+              </button>
+            )}
           </div>
         </form>
       </Modal>
@@ -255,13 +418,15 @@ const GruposPage = () => {
         {deletingGrupo && (
           <div>
             <p className="mb-4 text-gray-700">
-              ¿Está seguro de eliminar el grupo <strong>{deletingGrupo.nombre}</strong>?
+              ¿Está seguro de eliminar el grupo{" "}
+              <strong>{deletingGrupo.nombre}</strong>?
             </p>
-            {(deletingGrupo.acciones && deletingGrupo.acciones.length > 0) ||
+            {(deletingGrupo.formularios &&
+              deletingGrupo.formularios.length > 0) ||
             (deletingGrupo.usuarios && deletingGrupo.usuarios.length > 0) ? (
               <p className="mb-4 text-sm text-red-600">
-                Advertencia: Este grupo tiene{' '}
-                {deletingGrupo.acciones?.length || 0} acción(es) y{' '}
+                Advertencia: Este grupo tiene{" "}
+                {deletingGrupo.formularios?.length || 0} formulario(s) y{" "}
                 {deletingGrupo.usuarios?.length || 0} usuario(s) asociado(s).
               </p>
             ) : null}
@@ -292,4 +457,3 @@ const GruposPage = () => {
 };
 
 export default GruposPage;
-

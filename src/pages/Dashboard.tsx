@@ -19,6 +19,7 @@ const OPERACIONES_ITEMS = [
   { name: "Camiones", href: "/camiones", description: "Gestión de camiones", color: "orange" as const },
   { name: "Marcas", href: "/marcas", description: "Gestión de marcas", color: "slate" as const },
   { name: "Tipos de Carga", href: "/tipos-carga", description: "Gestión de tipos de carga", color: "amber" as const },
+  { name: "Reportes", href: "/reportes", description: "Métricas y análisis de viajes", color: "indigo" as const },
 ];
 
 const formatMoney = (value: number) =>

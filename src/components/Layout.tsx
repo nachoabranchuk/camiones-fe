@@ -13,6 +13,7 @@ const operacionesItems = [
   { name: "Camiones", href: "/camiones" },
   { name: "Marcas", href: "/marcas" },
   { name: "Tipos de Carga", href: "/tipos-carga" },
+  { name: "Reportes", href: "/reportes" },
 ];
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {

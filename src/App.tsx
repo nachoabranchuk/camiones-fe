@@ -12,6 +12,7 @@ import AccionesPage from "./pages/AccionesPage";
 import GruposPage from "./pages/GruposPage";
 import UsuariosPage from "./pages/UsuariosPage";
 import ViajesPage from "./pages/ViajesPage";
+import ReportsPage from "./pages/ReportsPage";
 import ChoferesPage from "./pages/ChoferesPage";
 import CamionesPage from "./pages/CamionesPage";
 import MarcasPage from "./pages/MarcasPage";
@@ -137,6 +138,16 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <TiposCargaPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reportes"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ReportsPage />
                 </Layout>
               </ProtectedRoute>
             }

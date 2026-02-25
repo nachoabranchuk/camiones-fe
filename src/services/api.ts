@@ -21,6 +21,13 @@ import type {
   Camion,
   Viaje,
   DashboardReportes,
+  ReportesFilters,
+  ReportesKpis,
+  FacturacionMensualItem,
+  ViajesPorEstadoItem,
+  FacturacionPorChoferItem,
+  ViajesPorTipoCargaItem,
+  RendimientoKm,
   CreateMarcaDto,
   UpdateMarcaDto,
   CreateTipoCargaDto,
@@ -322,6 +329,32 @@ export const reportesApi = {
     const response = await api.get<DashboardReportes>("/reportes/dashboard");
     return response.data;
   },
+  getKpis: (params?: ReportesFilters) =>
+    api.get<ReportesKpis>("/reportes/kpis", { params }).then((r) => r.data),
+  getFacturacionMensual: (params?: ReportesFilters) =>
+    api
+      .get<FacturacionMensualItem[]>("/reportes/facturacion-mensual", { params })
+      .then((r) => r.data),
+  getViajesPorEstado: (params?: ReportesFilters) =>
+    api
+      .get<ViajesPorEstadoItem[]>("/reportes/viajes-por-estado", { params })
+      .then((r) => r.data),
+  getFacturacionPorChofer: (params?: ReportesFilters) =>
+    api
+      .get<FacturacionPorChoferItem[]>("/reportes/facturacion-por-chofer", {
+        params,
+      })
+      .then((r) => r.data),
+  getViajesPorTipoCarga: (params?: ReportesFilters) =>
+    api
+      .get<ViajesPorTipoCargaItem[]>("/reportes/viajes-por-tipo-carga", {
+        params,
+      })
+      .then((r) => r.data),
+  getRendimientoKm: (params?: ReportesFilters) =>
+    api
+      .get<RendimientoKm>("/reportes/rendimiento-km", { params })
+      .then((r) => r.data),
 };
 
 // Marcas

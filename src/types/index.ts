@@ -184,6 +184,46 @@ export interface DashboardReportes {
   viajesCancelados: number;
 }
 
+export interface ReportesFilters {
+  fechaDesde?: string;
+  fechaHasta?: string;
+  choferId?: string;
+  estado?: EstadoViaje | "";
+  tipoCargaId?: string;
+}
+
+export interface ReportesKpis {
+  totalFacturado: number;
+  totalViajes: number;
+  promedioPorViaje: number;
+  kilometrosTotales: number;
+  pesoTotal: number;
+}
+
+export interface FacturacionMensualItem {
+  mes: string;
+  total: number;
+}
+
+export interface ViajesPorEstadoItem {
+  estado: string;
+  cantidad: number;
+}
+
+export interface FacturacionPorChoferItem {
+  chofer: string;
+  total: number;
+}
+
+export interface ViajesPorTipoCargaItem {
+  tipoCarga: string;
+  cantidad: number;
+}
+
+export interface RendimientoKm {
+  valorPorKm: number;
+}
+
 export interface CreateMarcaDto {
   nombre: string;
   activo?: boolean;

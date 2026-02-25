@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { formulariosApi, modulosApi, accionesApi } from "../services/api";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import type {
   Formulario,
@@ -150,7 +151,7 @@ const FormulariosPage = () => {
     <div>
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Formularios</h1>
+          <h1 className="text-3xl font-bold text-black">Formularios</h1>
           <p className="mt-2 text-sm text-gray-600">Gestionar formularios</p>
         </div>
         <button
@@ -158,7 +159,7 @@ const FormulariosPage = () => {
           disabled={!hasAccessToAccion("Formularios.Crear Formulario")}
           className={`px-4 py-2 rounded-md ${
             hasAccessToAccion("Formularios.Crear Formulario")
-              ? "bg-green-600 text-white hover:bg-green-700"
+              ? "bg-brandRed-dark text-white hover:bg-brandRed"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
           title={
@@ -202,7 +203,7 @@ const FormulariosPage = () => {
                       }
                       className={`${
                         hasAccessToAccion("Formularios.Ver Formularios")
-                          ? "text-green-600 hover:text-green-800"
+                          ? "text-brandRed hover:text-brandRed-dark"
                           : "text-gray-300 cursor-not-allowed"
                       }`}
                       title={
@@ -210,8 +211,9 @@ const FormulariosPage = () => {
                           ? "No tienes permisos para ver formularios"
                           : "Ver"
                       }
+                      aria-label="Ver formulario"
                     >
-                      Ver
+                      <Eye className="w-4 h-4" aria-hidden="true" />
                     </button>
                     <button
                       onClick={() => handleEdit(formulario)}
@@ -228,8 +230,9 @@ const FormulariosPage = () => {
                           ? "No tienes permisos para editar formularios"
                           : "Editar"
                       }
+                      aria-label="Editar formulario"
                     >
-                      Editar
+                      <Pencil className="w-4 h-4" aria-hidden="true" />
                     </button>
                     <button
                       onClick={() => handleDeleteClick(formulario)}
@@ -246,8 +249,9 @@ const FormulariosPage = () => {
                           ? "No tienes permisos para eliminar formularios"
                           : "Eliminar"
                       }
+                      aria-label="Eliminar formulario"
                     >
-                      Eliminar
+                      <Trash2 className="w-4 h-4" aria-hidden="true" />
                     </button>
                   </div>
                 </div>
@@ -353,7 +357,7 @@ const FormulariosPage = () => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              className="px-4 py-2 bg-brandRed-dark text-white rounded-md hover:bg-brandRed"
             >
               {editingFormulario ? "Actualizar" : "Crear"}
             </button>

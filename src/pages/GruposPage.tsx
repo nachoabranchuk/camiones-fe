@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { gruposApi, formulariosApi } from "../services/api";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import type {
   Grupo,
@@ -175,7 +176,7 @@ const GruposPage = () => {
           disabled={!hasAccessToAccion("Grupos.Crear Grupo")}
           className={`px-4 py-2 rounded-md ${
             hasAccessToAccion("Grupos.Crear Grupo")
-              ? "bg-yellow-600 text-white hover:bg-yellow-700"
+              ? "bg-brandRed-dark text-white hover:bg-brandRed"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
           title={
@@ -247,9 +248,11 @@ const GruposPage = () => {
                             : "Editar"
                         }
                       >
-                        {isAdminGroup && isCurrentUserAdmin()
-                          ? "Ver"
-                          : "Editar"}
+                        {isAdminGroup && isCurrentUserAdmin() ? (
+                          <Eye className="w-4 h-4" aria-hidden="true" />
+                        ) : (
+                          <Pencil className="w-4 h-4" aria-hidden="true" />
+                        )}
                       </button>
                       <button
                         onClick={() => handleDeleteClick(grupo)}
@@ -267,7 +270,7 @@ const GruposPage = () => {
                             : "Eliminar"
                         }
                       >
-                        Eliminar
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -398,7 +401,7 @@ const GruposPage = () => {
             {!isEditingAdminReadOnly && (
               <button
                 type="submit"
-                className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700"
+                className="px-4 py-2 bg-brandRed-dark text-white rounded-md hover:bg-brandRed"
               >
                 {editingGrupo ? "Actualizar" : "Crear"}
               </button>

@@ -11,6 +11,11 @@ import FormulariosPage from "./pages/FormulariosPage";
 import AccionesPage from "./pages/AccionesPage";
 import GruposPage from "./pages/GruposPage";
 import UsuariosPage from "./pages/UsuariosPage";
+import ViajesPage from "./pages/ViajesPage";
+import ChoferesPage from "./pages/ChoferesPage";
+import CamionesPage from "./pages/CamionesPage";
+import MarcasPage from "./pages/MarcasPage";
+import TiposCargaPage from "./pages/TiposCargaPage";
 import LoginPage from "./pages/LoginPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -39,7 +44,7 @@ function App() {
           <Route
             path="/modulos"
             element={
-              <ProtectedRoute verAccion="Modulos.Ver Modulos">
+              <ProtectedRoute seccion="Modulos">
                 <Layout>
                   <ModulosPage />
                 </Layout>
@@ -49,7 +54,7 @@ function App() {
           <Route
             path="/formularios"
             element={
-              <ProtectedRoute verAccion="Formularios.Ver Formularios">
+              <ProtectedRoute seccion="Formularios">
                 <Layout>
                   <FormulariosPage />
                 </Layout>
@@ -59,7 +64,7 @@ function App() {
           <Route
             path="/acciones"
             element={
-              <ProtectedRoute verAccion="Acciones.Ver Acciones">
+              <ProtectedRoute seccion="Acciones">
                 <Layout>
                   <AccionesPage />
                 </Layout>
@@ -69,7 +74,7 @@ function App() {
           <Route
             path="/grupos"
             element={
-              <ProtectedRoute verAccion="Grupos.Ver Grupos">
+              <ProtectedRoute seccion="Grupos">
                 <Layout>
                   <GruposPage />
                 </Layout>
@@ -79,9 +84,59 @@ function App() {
           <Route
             path="/usuarios"
             element={
-              <ProtectedRoute verAccion="Usuarios.Ver Usuarios">
+              <ProtectedRoute seccion="Usuarios">
                 <Layout>
                   <UsuariosPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/viajes"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ViajesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/choferes"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ChoferesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/camiones"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CamionesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/marcas"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MarcasPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tipos-carga"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <TiposCargaPage />
                 </Layout>
               </ProtectedRoute>
             }

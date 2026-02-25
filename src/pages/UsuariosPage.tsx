@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { usuariosApi, gruposApi } from "../services/api";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import type { User, CreateUserDto, UpdateUserDto, Grupo } from "../types";
 import Modal from "../components/Modal";
@@ -249,8 +250,9 @@ const UsuariosPage = () => {
                       }}
                       className="text-blue-600 hover:text-blue-800"
                       title="Ver"
+                      aria-label="Ver usuario"
                     >
-                      Ver
+                      <Eye className="w-4 h-4" aria-hidden="true" />
                     </button>
                     {!isUserAdmin(usuario) && (
                       <>
@@ -269,8 +271,9 @@ const UsuariosPage = () => {
                               ? "No tienes permisos para editar usuarios"
                               : "Editar"
                           }
+                          aria-label="Editar usuario"
                         >
-                          Editar
+                          <Pencil className="w-4 h-4" aria-hidden="true" />
                         </button>
                         {canDelete(usuario) && (
                           <button
@@ -288,8 +291,9 @@ const UsuariosPage = () => {
                                 ? "No tienes permisos para eliminar usuarios"
                                 : "Eliminar"
                             }
+                            aria-label="Eliminar usuario"
                           >
-                            Eliminar
+                            <Trash2 className="w-4 h-4" aria-hidden="true" />
                           </button>
                         )}
                       </>
@@ -466,7 +470,7 @@ const UsuariosPage = () => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              className="px-4 py-2 bg-brandRed-dark text-white rounded-md hover:bg-brandRed"
             >
               {editingUsuario ? "Actualizar" : "Crear"}
             </button>

@@ -30,7 +30,7 @@ const LoginModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen
           </button>
           <button
             onClick={handleLogin}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="px-4 py-2 bg-brandRed-dark text-white rounded-md hover:bg-brandRed"
           >
             Login (Test)
           </button>

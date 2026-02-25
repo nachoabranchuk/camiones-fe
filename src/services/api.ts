@@ -15,6 +15,23 @@ import type {
   UpdateGrupoDto,
   CreateUserDto,
   UpdateUserDto,
+  Marca,
+  TipoCarga,
+  Chofer,
+  Camion,
+  Viaje,
+  DashboardReportes,
+  CreateMarcaDto,
+  UpdateMarcaDto,
+  CreateTipoCargaDto,
+  UpdateTipoCargaDto,
+  CreateChoferDto,
+  UpdateChoferDto,
+  CreateCamionDto,
+  UpdateCamionDto,
+  CreateViajeDto,
+  UpdateViajeDto,
+  FinalizarViajeDto,
 } from "../types";
 
 const API_BASE_URL = "http://localhost:3000";
@@ -297,6 +314,81 @@ export const authApi = {
     const response = await api.get("/auth/debug-permissions");
     return response.data;
   },
+};
+
+// Reportes
+export const reportesApi = {
+  getDashboard: async (): Promise<DashboardReportes> => {
+    const response = await api.get<DashboardReportes>("/reportes/dashboard");
+    return response.data;
+  },
+};
+
+// Marcas
+export const marcasApi = {
+  getAll: (activoOnly = true) =>
+    api.get<Marca[]>("/marcas", { params: { activo: activoOnly } }).then((r) => r.data),
+  getById: (id: string) => api.get<Marca>(`/marcas/${id}`).then((r) => r.data),
+  create: (data: CreateMarcaDto) => api.post<Marca>("/marcas", data).then((r) => r.data),
+  update: (id: string, data: UpdateMarcaDto) =>
+    api.put<Marca>(`/marcas/${id}`, data).then((r) => r.data),
+  delete: (id: string) => api.delete(`/marcas/${id}`),
+};
+
+// Tipos de Carga
+export const tiposCargaApi = {
+  getAll: (activoOnly = true) =>
+    api.get<TipoCarga[]>("/tipos-carga", { params: { activo: activoOnly } }).then((r) => r.data),
+  getById: (id: string) => api.get<TipoCarga>(`/tipos-carga/${id}`).then((r) => r.data),
+  create: (data: CreateTipoCargaDto) =>
+    api.post<TipoCarga>("/tipos-carga", data).then((r) => r.data),
+  update: (id: string, data: UpdateTipoCargaDto) =>
+    api.put<TipoCarga>(`/tipos-carga/${id}`, data).then((r) => r.data),
+  delete: (id: string) => api.delete(`/tipos-carga/${id}`),
+};
+
+// Choferes
+export const choferesApi = {
+  getAll: (activoOnly = true) =>
+    api.get<Chofer[]>("/choferes", { params: { activo: activoOnly } }).then((r) => r.data),
+  getById: (id: string) => api.get<Chofer>(`/choferes/${id}`).then((r) => r.data),
+  create: (data: CreateChoferDto) =>
+    api.post<Chofer>("/choferes", data).then((r) => r.data),
+  update: (id: string, data: UpdateChoferDto) =>
+    api.put<Chofer>(`/choferes/${id}`, data).then((r) => r.data),
+  delete: (id: string) => api.delete(`/choferes/${id}`),
+};
+
+// Camiones
+export const camionesApi = {
+  getAll: (activoOnly = true) =>
+    api.get<Camion[]>("/camiones", { params: { activo: activoOnly } }).then((r) => r.data),
+  getById: (id: string) => api.get<Camion>(`/camiones/${id}`).then((r) => r.data),
+  create: (data: CreateCamionDto) =>
+    api.post<Camion>("/camiones", data).then((r) => r.data),
+  update: (id: string, data: UpdateCamionDto) =>
+    api.put<Camion>(`/camiones/${id}`, data).then((r) => r.data),
+  delete: (id: string) => api.delete(`/camiones/${id}`),
+};
+
+// Viajes
+export const viajesApi = {
+  getAll: (params?: {
+    fechaDesde?: string;
+    fechaHasta?: string;
+    choferId?: string;
+    estado?: string;
+    origen?: string;
+    destino?: string;
+  }) => api.get<Viaje[]>("/viajes", { params }).then((r) => r.data),
+  getById: (id: string) => api.get<Viaje>(`/viajes/${id}`).then((r) => r.data),
+  create: (data: CreateViajeDto) =>
+    api.post<Viaje>("/viajes", data).then((r) => r.data),
+  update: (id: string, data: UpdateViajeDto) =>
+    api.put<Viaje>(`/viajes/${id}`, data).then((r) => r.data),
+  finalizar: (id: string, data: FinalizarViajeDto) =>
+    api.put<Viaje>(`/viajes/${id}/finalizar`, data).then((r) => r.data),
+  delete: (id: string) => api.delete(`/viajes/${id}`),
 };
 
 export default api;

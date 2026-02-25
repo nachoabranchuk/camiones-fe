@@ -34,14 +34,14 @@ const ToastNotification = ({
 
   const getStyles = () => {
     switch (type) {
-      case "success":
-        return "bg-green-600 text-white";
+    case "success":
+      return "bg-brandRed text-white";
       case "error":
         return "bg-red-600 text-white";
       case "warning":
         return "bg-amber-500 text-white";
-      case "info":
-        return "bg-blue-600 text-white";
+    case "info":
+      return "bg-brandRed text-white";
       default:
         return "bg-gray-800 text-white";
     }

@@ -8,17 +8,17 @@ interface LayoutProps {
 }
 
 const operacionesItems = [
-  { name: "Viajes", href: "/viajes" },
-  { name: "Choferes", href: "/choferes" },
-  { name: "Camiones", href: "/camiones" },
-  { name: "Marcas", href: "/marcas" },
-  { name: "Tipos de Carga", href: "/tipos-carga" },
-  { name: "Reportes", href: "/reportes" },
+  { name: "Viajes", href: "/viajes", seccion: "Viajes" },
+  { name: "Choferes", href: "/choferes", seccion: "Choferes" },
+  { name: "Camiones", href: "/camiones", seccion: "Camiones" },
+  { name: "Marcas", href: "/marcas", seccion: "Marcas" },
+  { name: "Tipos de Carga", href: "/tipos-carga", seccion: "Tipos de Carga" },
+  { name: "Reportes", href: "/reportes", seccion: "Reportes" },
 ];
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
-  const { user, logout, hasAccessToSeccion } = useAuth();
+  const { user, logout, hasAccessToSeccion, isCurrentUserAdmin } = useAuth();
   const [securityDropdownOpen, setSecurityDropdownOpen] = useState(false);
   const [operacionesDropdownOpen, setOperacionesDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -114,20 +114,38 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   {operacionesDropdownOpen && (
                     <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
                       <div className="py-1">
-                        {operacionesItems.map((item) => (
-                          <Link
-                            key={item.href}
-                            to={item.href}
-                            onClick={() => setOperacionesDropdownOpen(false)}
-                            className={`block px-4 py-2 text-sm ${
-                              isActive(item.href)
-                                ? "bg-brandRed-dark text-white font-medium"
-                                : "text-black hover:bg-gray-800 hover:text-white"
-                            }`}
-                          >
-                            {item.name}
-                          </Link>
-                        ))}
+                        {operacionesItems.map((item) => {
+                          const hasAccess =
+                            isCurrentUserAdmin() ||
+                            hasAccessToSeccion(item.seccion);
+                          const baseClasses = "block px-4 py-2 text-sm";
+
+                          if (!hasAccess) {
+                            return (
+                              <span
+                                key={item.href}
+                                className={`${baseClasses} text-gray-400 cursor-not-allowed`}
+                              >
+                                {item.name}
+                              </span>
+                            );
+                          }
+
+                          return (
+                            <Link
+                              key={item.href}
+                              to={item.href}
+                              onClick={() => setOperacionesDropdownOpen(false)}
+                              className={`${baseClasses} ${
+                                isActive(item.href)
+                                  ? "bg-brandRed-dark text-white font-medium"
+                                  : "text-black hover:bg-gray-800 hover:text-white"
+                              }`}
+                            >
+                              {item.name}
+                            </Link>
+                          );
+                        })}
                       </div>
                     </div>
                   )}

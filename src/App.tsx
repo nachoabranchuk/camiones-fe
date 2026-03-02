@@ -95,7 +95,7 @@ function App() {
           <Route
             path="/viajes"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute seccion="Viajes">
                 <Layout>
                   <ViajesPage />
                 </Layout>
@@ -105,7 +105,7 @@ function App() {
           <Route
             path="/choferes"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute seccion="Choferes">
                 <Layout>
                   <ChoferesPage />
                 </Layout>
@@ -115,7 +115,7 @@ function App() {
           <Route
             path="/camiones"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute seccion="Camiones">
                 <Layout>
                   <CamionesPage />
                 </Layout>
@@ -125,7 +125,7 @@ function App() {
           <Route
             path="/marcas"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute seccion="Marcas">
                 <Layout>
                   <MarcasPage />
                 </Layout>
@@ -135,7 +135,7 @@ function App() {
           <Route
             path="/tipos-carga"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute seccion="Tipos de Carga">
                 <Layout>
                   <TiposCargaPage />
                 </Layout>
@@ -145,7 +145,7 @@ function App() {
           <Route
             path="/reportes"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute seccion="Reportes">
                 <Layout>
                   <ReportsPage />
                 </Layout>

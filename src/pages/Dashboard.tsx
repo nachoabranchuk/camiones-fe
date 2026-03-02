@@ -14,12 +14,48 @@ const SEGURIDAD_ITEMS = [
 ];
 
 const OPERACIONES_ITEMS = [
-  { name: "Viajes", href: "/viajes", description: "Registrar y gestionar viajes", color: "indigo" as const },
-  { name: "Choferes", href: "/choferes", description: "Gestión de choferes", color: "teal" as const },
-  { name: "Camiones", href: "/camiones", description: "Gestión de camiones", color: "orange" as const },
-  { name: "Marcas", href: "/marcas", description: "Gestión de marcas", color: "slate" as const },
-  { name: "Tipos de Carga", href: "/tipos-carga", description: "Gestión de tipos de carga", color: "amber" as const },
-  { name: "Reportes", href: "/reportes", description: "Métricas y análisis de viajes", color: "indigo" as const },
+  {
+    name: "Viajes",
+    href: "/viajes",
+    seccion: "Viajes",
+    description: "Registrar y gestionar viajes",
+    color: "indigo" as const,
+  },
+  {
+    name: "Choferes",
+    href: "/choferes",
+    seccion: "Choferes",
+    description: "Gestión de choferes",
+    color: "teal" as const,
+  },
+  {
+    name: "Camiones",
+    href: "/camiones",
+    seccion: "Camiones",
+    description: "Gestión de camiones",
+    color: "orange" as const,
+  },
+  {
+    name: "Marcas",
+    href: "/marcas",
+    seccion: "Marcas",
+    description: "Gestión de marcas",
+    color: "slate" as const,
+  },
+  {
+    name: "Tipos de Carga",
+    href: "/tipos-carga",
+    seccion: "Tipos de Carga",
+    description: "Gestión de tipos de carga",
+    color: "amber" as const,
+  },
+  {
+    name: "Reportes",
+    href: "/reportes",
+    seccion: "Reportes",
+    description: "Métricas y análisis de viajes",
+    color: "indigo" as const,
+  },
 ];
 
 const formatMoney = (value: number) =>
@@ -39,7 +75,8 @@ const BORDER_CLASSES: Record<string, string> = {
 };
 
 const Dashboard = () => {
-  const { hasAccessToAccion } = useAuth();
+  const { hasAccessToAccion, hasAccessToSeccion, isCurrentUserAdmin } =
+    useAuth();
   const [reportes, setReportes] = useState<DashboardReportes | null>(null);
   const [loadingReportes, setLoadingReportes] = useState(true);
 
@@ -53,6 +90,9 @@ const Dashboard = () => {
 
   const visibleSeguridad = SEGURIDAD_ITEMS.filter((item) =>
     hasAccessToAccion(item.verAccion),
+  );
+  const visibleOperaciones = OPERACIONES_ITEMS.filter(
+    (item) => isCurrentUserAdmin() || hasAccessToSeccion(item.seccion),
   );
   const hasAnyAccess = visibleSeguridad.length > 0;
 
@@ -103,18 +143,24 @@ const Dashboard = () => {
       {/* Operaciones */}
       <div className="mb-10">
         <h2 className="text-lg font-semibold text-gray-700 mb-4">Operaciones</h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {OPERACIONES_ITEMS.map((card) => (
-            <Link
-              key={card.href}
-              to={card.href}
-              className={`block rounded-lg shadow-md border-2 p-6 text-gray-900 transition-colors ${BORDER_CLASSES[card.color]}`}
-            >
-              <h3 className="text-xl font-semibold mb-2">{card.name}</h3>
-              <p className="text-gray-600 text-sm">{card.description}</p>
-            </Link>
-          ))}
-        </div>
+        {visibleOperaciones.length > 0 ? (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {visibleOperaciones.map((card) => (
+              <Link
+                key={card.href}
+                to={card.href}
+                className={`block rounded-lg shadow-md border-2 p-6 text-gray-900 transition-colors ${BORDER_CLASSES[card.color]}`}
+              >
+                <h3 className="text-xl font-semibold mb-2">{card.name}</h3>
+                <p className="text-gray-600 text-sm">{card.description}</p>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">
+            No tienes acceso a módulos de operaciones.
+          </p>
+        )}
       </div>
 
       {/* Seguridad */}

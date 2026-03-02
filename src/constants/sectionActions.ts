@@ -1,9 +1,10 @@
 /**
- * Nombres de acción (parte después del punto en "Formulario.NombreAccion")
- * que otorgan acceso a cada sección del módulo Seguridad.
+ * Nombres de acción (parte después del punto en "Modulo.NombreAccion")
+ * que otorgan acceso a cada sección/página.
  * Si el usuario tiene al menos una de estas acciones, puede ver la pestaña y entrar a la ruta.
  */
 export const SECTION_ACTIONS: Record<string, string[]> = {
+  // Seguridad
   Modulos: ["Ver Modulos", "Crear Modulo", "Editar Modulo", "Eliminar Modulo"],
   Formularios: [
     "Ver Formularios",
@@ -19,6 +20,41 @@ export const SECTION_ACTIONS: Record<string, string[]> = {
     "Editar Usuario",
     "Eliminar Usuario",
   ],
+
+  // Operaciones
+  Viajes: [
+    "Ver Viajes",
+    "Registrar Viaje",
+    "Editar Viaje",
+    "Finalizar Viaje",
+    "Eliminar Viaje",
+  ],
+  Choferes: [
+    "Ver Choferes",
+    "Crear Chofer",
+    "Editar Chofer",
+    "Eliminar Chofer",
+  ],
+  Camiones: [
+    "Ver Camiones",
+    "Crear Camion",
+    "Editar Camion",
+    "Eliminar Camion",
+  ],
+  Marcas: [
+    "Ver Marcas",
+    "Crear Marca",
+    "Editar Marca",
+    "Eliminar Marca",
+  ],
+  "Tipos de Carga": [
+    "Ver Tipos de Carga",
+    "Crear Tipo de Carga",
+    "Editar Tipo de Carga",
+    "Eliminar Tipo de Carga",
+  ],
+  // Reportes
+  Reportes: ["Ver Reportes"],
 };
 
 /** Extrae el nombre de la acción (parte después del último punto) */

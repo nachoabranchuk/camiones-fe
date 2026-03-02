@@ -34,6 +34,7 @@ const ViajesPage = () => {
   const [viajeAFinalizar, setViajeAFinalizar] = useState<Viaje | null>(null);
   const [pesoFinal, setPesoFinal] = useState("");
   const [viajeAEliminar, setViajeAEliminar] = useState<Viaje | null>(null);
+  const [viajeACancelar, setViajeACancelar] = useState<Viaje | null>(null);
   const [form, setForm] = useState<CreateViajeDto>({
     fecha: new Date().toISOString().slice(0, 10),
     origen: "",
@@ -163,6 +164,11 @@ const ViajesPage = () => {
 
   const handleRequestDelete = (v: Viaje) => {
     setViajeAEliminar(v);
+    setError(null);
+  };
+
+  const handleRequestCancel = (v: Viaje) => {
+    setViajeACancelar(v);
     setError(null);
   };
 
@@ -343,6 +349,15 @@ const ViajesPage = () => {
                           <Pencil className="w-4 h-4" aria-hidden="true" />
                         </button>
                       )}
+                      {v.estado !== "FINALIZADO" && v.estado !== "CANCELADO" && (
+                        <button
+                          type="button"
+                          onClick={() => handleRequestCancel(v)}
+                          className="text-sm text-amber-600 hover:text-amber-800"
+                        >
+                          Cancelar
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => handleRequestDelete(v)}
@@ -517,6 +532,43 @@ const ViajesPage = () => {
             className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
           >
             Eliminar
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={viajeACancelar != null}
+        onClose={() => setViajeACancelar(null)}
+        title="Confirmar cancelación"
+      >
+        <p className="mb-4 text-sm text-gray-700">
+          ¿Seguro que querés cancelar este viaje{" "}
+          {viajeACancelar ? `${viajeACancelar.origen} → ${viajeACancelar.destino} (${viajeACancelar.fecha})` : ""}?
+        </p>
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setViajeACancelar(null)}
+            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+          >
+            Volver
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              if (!viajeACancelar) return;
+              setError(null);
+              try {
+                await viajesApi.update(viajeACancelar.id, { estado: "CANCELADO" });
+                setViajeACancelar(null);
+                loadViajes();
+              } catch {
+                setError("No se pudo cancelar el viaje");
+              }
+            }}
+            className="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700"
+          >
+            Cancelar viaje
           </button>
         </div>
       </Modal>

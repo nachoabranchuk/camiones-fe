@@ -3,8 +3,10 @@ import { camionesApi, marcasApi } from "../services/api";
 import { Pencil, Trash2 } from "lucide-react";
 import type { Camion, Marca, CreateCamionDto } from "../types";
 import Modal from "../components/Modal";
+import { useAuth } from "../contexts/AuthContext";
 
 const CamionesPage = () => {
+  const { hasAccessToAccion } = useAuth();
   const [items, setItems] = useState<Camion[]>([]);
   const [marcas, setMarcas] = useState<Marca[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,13 +119,15 @@ const CamionesPage = () => {
             />
             Incluir inactivos
           </label>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="bg-brandRed-dark text-white px-4 py-2 rounded hover:bg-brandRed"
-          >
-            Nuevo camión
-          </button>
+          {hasAccessToAccion("Camiones.Crear Camion") && (
+            <button
+              type="button"
+              onClick={openCreate}
+              className="bg-brandRed-dark text-white px-4 py-2 rounded hover:bg-brandRed"
+            >
+              Nuevo camión
+            </button>
+          )}
         </div>
       </div>
 
@@ -146,22 +150,26 @@ const CamionesPage = () => {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openEdit(c)}
-                      className="text-brandRed hover:text-brandRed-dark text-sm"
-                      aria-label="Editar camión"
-                    >
-                      <Pencil className="w-4 h-4" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRequestDelete(c)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                      aria-label="Eliminar camión"
-                    >
-                      <Trash2 className="w-4 h-4" aria-hidden="true" />
-                    </button>
+                    {hasAccessToAccion("Camiones.Editar Camion") && (
+                      <button
+                        type="button"
+                        onClick={() => openEdit(c)}
+                        className="text-brandRed hover:text-brandRed-dark text-sm"
+                        aria-label="Editar camión"
+                      >
+                        <Pencil className="w-4 h-4" aria-hidden="true" />
+                      </button>
+                    )}
+                    {hasAccessToAccion("Camiones.Eliminar Camion") && (
+                      <button
+                        type="button"
+                        onClick={() => handleRequestDelete(c)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                        aria-label="Eliminar camión"
+                      >
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
+                      </button>
+                    )}
                   </div>
                 </li>
               ))

@@ -3,6 +3,7 @@ import { tiposCargaApi } from "../services/api";
 import { Pencil, Trash2 } from "lucide-react";
 import type { TipoCarga, CreateTipoCargaDto, UnidadMedida } from "../types";
 import Modal from "../components/Modal";
+import { useAuth } from "../contexts/AuthContext";
 
 const UNIDADES: UnidadMedida[] = [
   "KG",
@@ -16,6 +17,7 @@ const UNIDADES: UnidadMedida[] = [
 ];
 
 const TiposCargaPage = () => {
+  const { hasAccessToAccion } = useAuth();
   const [items, setItems] = useState<TipoCarga[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -109,13 +111,15 @@ const TiposCargaPage = () => {
             />
             Incluir inactivos
           </label>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="bg-brandRed-dark text-white px-4 py-2 rounded hover:bg-brandRed"
-          >
-            Nuevo tipo
-          </button>
+          {hasAccessToAccion("Tipos de Carga.Crear Tipo de Carga") && (
+            <button
+              type="button"
+              onClick={openCreate}
+              className="bg-brandRed-dark text-white px-4 py-2 rounded hover:bg-brandRed"
+            >
+              Nuevo tipo
+            </button>
+          )}
         </div>
       </div>
 
@@ -136,22 +140,30 @@ const TiposCargaPage = () => {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openEdit(t)}
-                      className="text-brandRed hover:text-brandRed-dark text-sm"
-                      aria-label="Editar tipo de carga"
-                    >
-                      <Pencil className="w-4 h-4" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRequestDelete(t)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                      aria-label="Eliminar tipo de carga"
-                    >
-                      <Trash2 className="w-4 h-4" aria-hidden="true" />
-                    </button>
+                    {hasAccessToAccion(
+                      "Tipos de Carga.Editar Tipo de Carga",
+                    ) && (
+                      <button
+                        type="button"
+                        onClick={() => openEdit(t)}
+                        className="text-brandRed hover:text-brandRed-dark text-sm"
+                        aria-label="Editar tipo de carga"
+                      >
+                        <Pencil className="w-4 h-4" aria-hidden="true" />
+                      </button>
+                    )}
+                    {hasAccessToAccion(
+                      "Tipos de Carga.Eliminar Tipo de Carga",
+                    ) && (
+                      <button
+                        type="button"
+                        onClick={() => handleRequestDelete(t)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                        aria-label="Eliminar tipo de carga"
+                      >
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
+                      </button>
+                    )}
                   </div>
                 </li>
               ))

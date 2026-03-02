@@ -15,6 +15,7 @@ import type {
   EstadoViaje,
 } from "../types";
 import Modal from "../components/Modal";
+import { useAuth } from "../contexts/AuthContext";
 
 const ESTADOS: EstadoViaje[] = ["PENDIENTE", "EN_CURSO", "FINALIZADO", "CANCELADO"];
 
@@ -23,6 +24,7 @@ const formatMoney = (value: number) =>
   Number(value || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const ViajesPage = () => {
+  const { hasAccessToAccion } = useAuth();
   const [items, setItems] = useState<Viaje[]>([]);
   const [choferes, setChoferes] = useState<Chofer[]>([]);
   const [camiones, setCamiones] = useState<Camion[]>([]);
@@ -193,13 +195,15 @@ const ViajesPage = () => {
             Registrar y gestionar viajes. Estado: PENDIENTE → EN_CURSO → FINALIZADO (con peso final).
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="bg-brandRed-dark text-white px-4 py-2 rounded hover:bg-brandRed"
-        >
-          Registrar viaje
-        </button>
+        {hasAccessToAccion("Viajes.Registrar Viaje") && (
+          <button
+            type="button"
+            onClick={openCreate}
+            className="bg-brandRed-dark text-white px-4 py-2 rounded hover:bg-brandRed"
+          >
+            Registrar viaje
+          </button>
+        )}
       </div>
 
       {/* Filtros */}
@@ -321,7 +325,8 @@ const ViajesPage = () => {
                       </span>
                     </div>
                     <div className="flex gap-2 flex-shrink-0">
-                      {v.estado === "PENDIENTE" && (
+                      {v.estado === "PENDIENTE" &&
+                        hasAccessToAccion("Viajes.Editar Viaje") && (
                         <button
                           type="button"
                           onClick={() => handleIniciar(v)}
@@ -330,7 +335,8 @@ const ViajesPage = () => {
                           Iniciar
                         </button>
                       )}
-                      {v.estado === "EN_CURSO" && (
+                      {v.estado === "EN_CURSO" &&
+                        hasAccessToAccion("Viajes.Finalizar Viaje") && (
                         <button
                           type="button"
                           onClick={() => openFinalizar(v)}
@@ -339,7 +345,8 @@ const ViajesPage = () => {
                           Finalizar
                         </button>
                       )}
-                      {v.estado !== "FINALIZADO" && (
+                      {v.estado !== "FINALIZADO" &&
+                        hasAccessToAccion("Viajes.Editar Viaje") && (
                         <button
                           type="button"
                           onClick={() => openEdit(v)}
@@ -349,7 +356,9 @@ const ViajesPage = () => {
                           <Pencil className="w-4 h-4" aria-hidden="true" />
                         </button>
                       )}
-                      {v.estado !== "FINALIZADO" && v.estado !== "CANCELADO" && (
+                      {v.estado !== "FINALIZADO" &&
+                        v.estado !== "CANCELADO" &&
+                        hasAccessToAccion("Viajes.Editar Viaje") && (
                         <button
                           type="button"
                           onClick={() => handleRequestCancel(v)}
@@ -358,14 +367,16 @@ const ViajesPage = () => {
                           Cancelar
                         </button>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => handleRequestDelete(v)}
-                        className="text-sm text-red-600 hover:text-red-800"
-                        aria-label="Eliminar viaje"
-                      >
-                        <Trash2 className="w-4 h-4" aria-hidden="true" />
-                      </button>
+                      {hasAccessToAccion("Viajes.Eliminar Viaje") && (
+                        <button
+                          type="button"
+                          onClick={() => handleRequestDelete(v)}
+                          className="text-sm text-red-600 hover:text-red-800"
+                          aria-label="Eliminar viaje"
+                        >
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </li>

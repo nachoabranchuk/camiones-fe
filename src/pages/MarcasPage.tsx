@@ -3,8 +3,10 @@ import { marcasApi } from "../services/api";
 import { Pencil, Trash2 } from "lucide-react";
 import type { Marca, CreateMarcaDto, UpdateMarcaDto } from "../types";
 import Modal from "../components/Modal";
+import { useAuth } from "../contexts/AuthContext";
 
 const MarcasPage = () => {
+  const { hasAccessToAccion } = useAuth();
   const [items, setItems] = useState<Marca[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -90,13 +92,15 @@ const MarcasPage = () => {
             />
             Incluir inactivos
           </label>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="bg-brandRed-dark text-white px-4 py-2 rounded hover:bg-brandRed"
-          >
-            Nueva marca
-          </button>
+          {hasAccessToAccion("Marcas.Crear Marca") && (
+            <button
+              type="button"
+              onClick={openCreate}
+              className="bg-brandRed-dark text-white px-4 py-2 rounded hover:bg-brandRed"
+            >
+              Nueva marca
+            </button>
+          )}
         </div>
       </div>
 
@@ -117,22 +121,26 @@ const MarcasPage = () => {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openEdit(m)}
-                      className="text-brandRed hover:text-brandRed-dark text-sm"
-                      aria-label="Editar marca"
-                    >
-                      <Pencil className="w-4 h-4" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRequestDelete(m)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                      aria-label="Eliminar marca"
-                    >
-                      <Trash2 className="w-4 h-4" aria-hidden="true" />
-                    </button>
+                    {hasAccessToAccion("Marcas.Editar Marca") && (
+                      <button
+                        type="button"
+                        onClick={() => openEdit(m)}
+                        className="text-brandRed hover:text-brandRed-dark text-sm"
+                        aria-label="Editar marca"
+                      >
+                        <Pencil className="w-4 h-4" aria-hidden="true" />
+                      </button>
+                    )}
+                    {hasAccessToAccion("Marcas.Eliminar Marca") && (
+                      <button
+                        type="button"
+                        onClick={() => handleRequestDelete(m)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                        aria-label="Eliminar marca"
+                      >
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
+                      </button>
+                    )}
                   </div>
                 </li>
               ))

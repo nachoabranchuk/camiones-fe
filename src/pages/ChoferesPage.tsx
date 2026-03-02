@@ -3,8 +3,10 @@ import { choferesApi } from "../services/api";
 import { Pencil, Trash2 } from "lucide-react";
 import type { Chofer, CreateChoferDto } from "../types";
 import Modal from "../components/Modal";
+import { useAuth } from "../contexts/AuthContext";
 
 const ChoferesPage = () => {
+  const { hasAccessToAccion } = useAuth();
   const [items, setItems] = useState<Chofer[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -112,13 +114,15 @@ const ChoferesPage = () => {
             />
             Incluir inactivos
           </label>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="bg-brandRed-dark text-white px-4 py-2 rounded hover:bg-brandRed"
-          >
-            Nuevo chofer
-          </button>
+          {hasAccessToAccion("Choferes.Crear Chofer") && (
+            <button
+              type="button"
+              onClick={openCreate}
+              className="bg-brandRed-dark text-white px-4 py-2 rounded hover:bg-brandRed"
+            >
+              Nuevo chofer
+            </button>
+          )}
         </div>
       </div>
 
@@ -142,22 +146,26 @@ const ChoferesPage = () => {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openEdit(c)}
-                      className="text-brandRed hover:text-brandRed-dark text-sm"
-                      aria-label="Editar chofer"
-                    >
-                      <Pencil className="w-4 h-4" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRequestDelete(c)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                      aria-label="Eliminar chofer"
-                    >
-                      <Trash2 className="w-4 h-4" aria-hidden="true" />
-                    </button>
+                    {hasAccessToAccion("Choferes.Editar Chofer") && (
+                      <button
+                        type="button"
+                        onClick={() => openEdit(c)}
+                        className="text-brandRed hover:text-brandRed-dark text-sm"
+                        aria-label="Editar chofer"
+                      >
+                        <Pencil className="w-4 h-4" aria-hidden="true" />
+                      </button>
+                    )}
+                    {hasAccessToAccion("Choferes.Eliminar Chofer") && (
+                      <button
+                        type="button"
+                        onClick={() => handleRequestDelete(c)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                        aria-label="Eliminar chofer"
+                      >
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
+                      </button>
+                    )}
                   </div>
                 </li>
               ))
